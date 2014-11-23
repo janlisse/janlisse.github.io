@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>12{programmers}</title>
+  <title>Limitations in JSSE TLS Implementation - 12{programmers}</title>
   <meta name="author" content="Jan Liße">
 
   
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://janlisse.github.io">
+  <link rel="canonical" href="http://janlisse.github.io/blog/2010/01/27/limitations-in-jsse-tls-implementation">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="12{programmers}" type="application/atom+xml">
@@ -52,15 +52,14 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2010/01/27/limitations-in-jsse-tls-implementation/">Limitations in JSSE TLS Implementation</a></h1>
+      
+        <h1 class="entry-title">Limitations in JSSE TLS Implementation</h1>
+      
     
     
       <p class="meta">
@@ -77,7 +76,7 @@
   </header>
 
 
-  <div class="entry-content"><p>In the context of the german electronic health card (EHC) the specifications allow for TLS connections with high need for protection the following SSL cipher suites only:</p>
+<div class="entry-content"><p>In the context of the german electronic health card (EHC) the specifications allow for TLS connections with high need for protection the following SSL cipher suites only:</p>
 
 <ul>
 <li>TLS_DHE_RSA_WITH_AES_128_CBC_SHA</li>
@@ -107,23 +106,64 @@ which works out of the box with a DH modulus length > 1024 Bit.
 Bouncycastle also provides a lightweight TLS API, but at the moment it lacks TLS client authentication,
 which is a must-have in my scenario.</p>
 </div>
-  
+
+
+  <footer>
+    <p class="meta">
+      
   
 
 
-    </article>
+
+  <span class="byline author vcard">Authored by <span class="fn">
   
-  <div class="pagination">
+    Jan Liße
+  
+  </span></span>
+
+
+      
+
+
+
+
+<time class='entry-date' datetime='2010-01-27T21:59:30+01:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2010</span></span> <span class='time'>9:59 pm</span></time>
+      
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/java/'>java</a>, <a class='category' href='/blog/categories/tls/'>tls</a>
+  
+</span>
+
+
+    </p>
     
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://janlisse.github.io/blog/2010/01/27/limitations-in-jsse-tls-implementation/" data-via="" data-counturl="http://janlisse.github.io/blog/2010/01/27/limitations-in-jsse-tls-implementation/" >Tweet</a>
+  
+  
+  
 </div>
-<aside class="sidebar">
-  
+
     
-  
-</aside>
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+
+</div>
 
     </div>
   </div>
@@ -139,7 +179,10 @@ which is a must-have in my scenario.</p>
       var disqus_shortname = '12programmers';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://janlisse.github.io/blog/2010/01/27/limitations-in-jsse-tls-implementation/';
+        var disqus_url = 'http://janlisse.github.io/blog/2010/01/27/limitations-in-jsse-tls-implementation/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
