@@ -10,11 +10,11 @@ Every now and then every backend developer faces the situation to integrate/proc
 into the companies system, provided in the form of plain old CSV files. 
 But what if the CSV file is to huge to fit into memory entirely, but you still want to leverage
 parallel computing to get things done in finite time? 
-Once again the excellent [Akka Streams] (http://doc.akka.io/docs/akka-stream-and-http-experimental/1.0/) framework comes to the rescue.
+Once again the excellent [Akka Streams](http://doc.akka.io/docs/akka-stream-and-http-experimental/1.0/) framework comes to the rescue.
 
-Processing big csv files with Akk Streams is quite straightforward. First you need a [Source] that emits ByteStrings from a local file or
- another storage location like S3. Then you can leverage Akka Streams classes to group the ByteStrings to lines. Afterwards
- you can then feed those lines into a CSV Parser and emit the parsed fields. Finally you can add your own processing logic i.e. mapping to custom
+Processing big csv files with Akk Streams is quite straightforward. First you need a Akka Streams [Source](http://doc.akka.io/api/akka-stream-and-http-experimental/current/#akka.stream.scaladsl.Source) 
+that emits [ByteStrings](http://doc.akka.io/api/akka/current/#akka.util.ByteString) from a local file or another storage location like S3. Then you can leverage Akka Streams classes to group the ByteStrings to lines. Afterwards
+ you can then feed those lines into a CSV Parser and emit the parsed fields. Finally you can add your own processing logic i.e. mapping to a custom
  model and sending to an API or Backend Service.
  
  With SynchronousFileSource Akka Streams already provides the ability to stream ByteStrings from a local file.
@@ -34,7 +34,7 @@ Processing big csv files with Akk Streams is quite straightforward. First you ne
  The default format uses "," as delimiter and "\r\n" as line separator.
  
  
- For the CSV parsing part we have written a custom Akka Streams PullPushStage that transforms a raw line into a Map[String, String] with the keys being
+ For the CSV parsing part we have written a custom Akka Streams [PullPushStage](http://doc.akka.io/docs/akka-stream-and-http-experimental/current/scala/stream-customize.html) that transforms a raw line into a Map[String, String] with the keys being
  field names from the CSV header line. Thus this stage requires a header line to exist in the CSV. The resulting Map is emitted together
  with the current line number in the file.
  
