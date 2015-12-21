@@ -12,7 +12,7 @@ But what if the CSV file is to huge to fit into memory entirely, but you still w
 parallel computing to get things done in finite time? 
 Once again the excellent [Akka Streams](http://doc.akka.io/docs/akka-stream-and-http-experimental/1.0/) framework comes to the rescue.
 
-Processing big csv files with Akk Streams is quite straightforward. First you need a Akka Streams [Source](http://doc.akka.io/api/akka-stream-and-http-experimental/current/#akka.stream.scaladsl.Source) 
+Processing big csv files with Akka Streams is quite straightforward. First you need a Akka Streams [Source](http://doc.akka.io/api/akka-stream-and-http-experimental/current/#akka.stream.scaladsl.Source) 
 that emits [ByteStrings](http://doc.akka.io/api/akka/current/#akka.util.ByteString) from a local file or another storage location like S3. Then you can leverage Akka Streams classes to group the ByteStrings to lines. Afterwards
  you can then feed those lines into a CSV Parser and emit the parsed fields. Finally you can add your own processing logic i.e. mapping to a custom
  model and sending to an API or Backend Service.
