@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>12{programmers}</title>
+  <title>Stream Processing of Large CSV Files - 12{programmers}</title>
   <meta name="author" content="Jan Liße">
 
   
@@ -19,7 +19,7 @@ into the companies system, provided in the form &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://janlisse.github.io">
+  <link rel="canonical" href="http://janlisse.github.io/blog/2015/12/21/stream-processing-of-large-csv-files">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="12{programmers}" type="application/atom+xml">
@@ -65,15 +65,14 @@ into the companies system, provided in the form &hellip;">
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2015/12/21/stream-processing-of-large-csv-files/">Stream Processing of Large CSV Files</a></h1>
+      
+        <h1 class="entry-title">Stream Processing of Large CSV Files</h1>
+      
     
     
       <p class="meta">
@@ -90,7 +89,7 @@ into the companies system, provided in the form &hellip;">
   </header>
 
 
-  <div class="entry-content"><p>Every now and then every backend developer faces the situation to integrate/process third party data
+<div class="entry-content"><p>Every now and then every backend developer faces the situation to integrate/process third party data
 into the companies system, provided in the form of plain old CSV files.
 But what if the CSV file is to huge to fit into memory entirely, but you still want to leverage
 parallel computing to get things done in finite time?
@@ -184,81 +183,66 @@ line we zip the headers together with the parsed fields from the CSV parser and 
 
 <p>You can find all the code <a href="https://github.com/janlisse/csv-flow">here</a> on github.</p>
 </div>
-  
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
+  
+
+
+
+  <span class="byline author vcard">Authored by <span class="fn">
+  
+    Jan Liße
+  
+  </span></span>
+
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-12-21T15:42:08+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>3:42 pm</span></time>
+      
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/akka-streams/'>akka streams</a>, <a class='category' href='/blog/categories/scala/'>scala</a>
+  
+</span>
+
+
+    </p>
     
-      <h1 class="entry-title"><a href="/blog/2010/01/27/limitations-in-jsse-tls-implementation/">Limitations in JSSE TLS Implementation</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2010-01-27T21:59:30+01:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2010</span></span> <span class='time'>9:59 pm</span></time>
-        
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In the context of the german electronic health card (EHC) the specifications allow for TLS connections with high need for protection the following SSL cipher suites only:</p>
-
-<ul>
-<li>TLS_DHE_RSA_WITH_AES_128_CBC_SHA</li>
-<li>TLS_DHE_RSA_WITH_AES_256_CBC_SHA</li>
-<li>TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA</li>
-</ul>
-
-
-<p>Furthermore for the Diffie-Hellman KeyExchange usage of Group 5 with a Modulus of 1536 Bit is required.
-Implementing the TLS client side using standard Java one is running into limitations of the current JSSE. The first problem is the Diffie-Hellman KeyPairGenerator from Sun. It has a hardcoded limitation to a modulus &lt;= 1024 Bit:</p>
-
-<figure class='code'><figcaption><span>Length check in DH KeyPairGenerator</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="k">if</span> <span class="o">((</span><span class="n">pSize</span> <span class="o">&lt;</span> <span class="mi">512</span><span class="o">)</span> <span class="o">||</span> <span class="o">(</span><span class="n">pSize</span> <span class="o">&gt;</span> <span class="mi">1024</span><span class="o">)</span> <span class="o">||</span> <span class="o">(</span><span class="n">pSize</span> <span class="o">%</span> <span class="mi">64</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">))</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidAlgorithmParameterException</span><span class="o">(</span><span class="s">&quot;Prime size must be multiple of 64, and can only range &quot;</span>
-</span><span class='line'>    <span class="o">+</span> <span class="s">&quot;from 512 to 1024 (inclusive)&quot;</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>A solution for this problem is to replace the Sun Diffie-Hellman KeyPairGenerator with the Bouncycastle implementation.
-It is sufficient to install the BC security provider with a higher priority than the default Sun Provider.
-Having done this keypair generation runs fine now but another problem arises. The Sun TlsPrfGenerator class responsible for calculating the TLS master secret from the premaster secret throws an ArrayIndexOutOfBoundsException because it can not handle a premaster secret size >= 128 Bit. A solution might be to replace the TlsMasterSecretKeyGenerator (that internally calls TlsPrfGenerator functions) implementation with a fixed version. A custom implementation must be shipped as a signed security provider, requiring to order a Service Provider certificate from Sun. Alternatively one could use the TLS implementation from IAIK,
-which works out of the box with a DH modulus length > 1024 Bit.
-Bouncycastle also provides a lightweight TLS API, but at the moment it lacks TLS client authentication,
-which is a must-have in my scenario.</p>
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://janlisse.github.io/blog/2015/12/21/stream-processing-of-large-csv-files/" data-via="" data-counturl="http://janlisse.github.io/blog/2015/12/21/stream-processing-of-large-csv-files/" >Tweet</a>
+  
+  
+  
 </div>
-  
-  
 
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2010/01/27/limitations-in-jsse-tls-implementation/" title="Previous Post: Limitations in JSSE TLS implementation">&laquo; Limitations in JSSE TLS implementation</a>
+      
+      
+    </p>
+  </footer>
+</article>
 
-    </article>
-  
-  <div class="pagination">
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
-<aside class="sidebar">
-  
-    
-  
-</aside>
+  </section>
+
+
+</div>
 
     </div>
   </div>
@@ -274,7 +258,10 @@ which is a must-have in my scenario.</p>
       var disqus_shortname = '12programmers';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://janlisse.github.io/blog/2015/12/21/stream-processing-of-large-csv-files/';
+        var disqus_url = 'http://janlisse.github.io/blog/2015/12/21/stream-processing-of-large-csv-files/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

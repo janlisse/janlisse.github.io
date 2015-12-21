@@ -4,7 +4,7 @@
   <title><![CDATA[12{programmers}]]></title>
   <link href="http://janlisse.github.io/atom.xml" rel="self"/>
   <link href="http://janlisse.github.io/"/>
-  <updated>2014-11-23T22:34:58+01:00</updated>
+  <updated>2015-12-21T16:55:52+01:00</updated>
   <id>http://janlisse.github.io/</id>
   <author>
     <name><![CDATA[Jan Liße]]></name>
@@ -12,6 +12,107 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Stream Processing of Large CSV Files]]></title>
+    <link href="http://janlisse.github.io/blog/2015/12/21/stream-processing-of-large-csv-files/"/>
+    <updated>2015-12-21T15:42:08+01:00</updated>
+    <id>http://janlisse.github.io/blog/2015/12/21/stream-processing-of-large-csv-files</id>
+    <content type="html"><![CDATA[<p>Every now and then every backend developer faces the situation to integrate/process third party data
+into the companies system, provided in the form of plain old CSV files.
+But what if the CSV file is to huge to fit into memory entirely, but you still want to leverage
+parallel computing to get things done in finite time?
+Once again the excellent <a href="http://doc.akka.io/docs/akka-stream-and-http-experimental/1.0/">Akka Streams</a> framework comes to the rescue.</p>
+
+<p>Processing big csv files with Akk Streams is quite straightforward. First you need a Akka Streams <a href="http://doc.akka.io/api/akka-stream-and-http-experimental/current/#akka.stream.scaladsl.Source">Source</a>
+that emits <a href="http://doc.akka.io/api/akka/current/#akka.util.ByteString">ByteStrings</a> from a local file or another storage location like S3. Then you can leverage Akka Streams classes to group the ByteStrings to lines. Afterwards
+ you can then feed those lines into a CSV Parser and emit the parsed fields. Finally you can add your own processing logic i.e. mapping to a custom
+ model and sending to an API or Backend Service.</p>
+
+<p> With SynchronousFileSource Akka Streams already provides the ability to stream ByteStrings from a local file.
+ Grouping them to lines is as simple as:</p>
+
+<pre><code class="` Scala">
+ private def toLine(implicit format: CSVFormat) = Framing.delimiter(
+     ByteString(format.lineTerminator),
+     maximumFrameLength = 4096,
+     allowTruncation = true
+   )
+</code></pre>
+
+<p> The CSVFormat that is passed implicitly determines delimiters, line separators etc. It must match the one that is used in the CSV data to be parsed.
+ The default format uses &ldquo;,&rdquo; as delimiter and &ldquo;\r\n&rdquo; as line separator.</p>
+
+<p> For the CSV parsing part we have written a custom Akka Streams <a href="http://doc.akka.io/docs/akka-stream-and-http-experimental/current/scala/stream-customize.html">PullPushStage</a> that transforms a raw line into a Map[String, String] with the keys being
+ field names from the CSV header line. Thus this stage requires a header line to exist in the CSV. The resulting Map is emitted together
+ with the current line number in the file.</p>
+
+<p> Our implementation utilizes an existing <a href="https://github.com/tototoshi/scala-csv">Scala CSV parsing</a> lib.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='Scala'><span class='line'><span class="k">class</span> <span class="nc">CsvStage</span><span class="o">()(</span><span class="k">implicit</span> <span class="n">format</span><span class="k">:</span> <span class="kt">CSVFormat</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">PushPullStage</span><span class="o">[</span><span class="kt">String</span>, <span class="o">(</span><span class="kt">Int</span>, <span class="kt">Map</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">String</span><span class="o">])]</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">private</span> <span class="k">val</span> <span class="n">parser</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">CSVParser</span><span class="o">(</span><span class="n">format</span><span class="o">)</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">var</span> <span class="n">headers</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">]]</span> <span class="k">=</span> <span class="nc">None</span>
+</span><span class='line'>  <span class="k">private</span> <span class="k">var</span> <span class="n">line</span> <span class="k">=</span> <span class="mi">0</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">onPush</span><span class="o">(</span><span class="n">elem</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">ctx</span><span class="k">:</span> <span class="kt">Context</span><span class="o">[(</span><span class="kt">Int</span>, <span class="kt">Map</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">String</span><span class="o">])])</span><span class="k">:</span> <span class="kt">SyncDirective</span> <span class="o">=</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">val</span> <span class="n">parsed</span> <span class="k">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parseLine</span><span class="o">(</span><span class="n">elem</span><span class="o">)</span>
+</span><span class='line'>    <span class="n">line</span> <span class="k">=</span> <span class="n">line</span> <span class="o">+</span> <span class="mi">1</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">headers</span><span class="o">.</span><span class="n">isEmpty</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">headers</span> <span class="k">=</span> <span class="n">parsed</span>
+</span><span class='line'>      <span class="n">ctx</span><span class="o">.</span><span class="n">pull</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">parsed</span><span class="o">.</span><span class="n">isEmpty</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">ctx</span><span class="o">.</span><span class="n">pull</span><span class="o">()</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">val</span> <span class="n">l</span> <span class="k">=</span> <span class="n">line</span> <span class="o">-&gt;</span> <span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">parsed</span><span class="o">.</span><span class="n">get</span><span class="o">).</span><span class="n">toMap</span>
+</span><span class='line'>      <span class="n">ctx</span><span class="o">.</span><span class="n">push</span><span class="o">(</span><span class="n">l</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">onPull</span><span class="o">(</span><span class="n">ctx</span><span class="k">:</span> <span class="kt">Context</span><span class="o">[(</span><span class="kt">Int</span>, <span class="kt">Map</span><span class="o">[</span><span class="kt">String</span>, <span class="kt">String</span><span class="o">])])</span><span class="k">:</span> <span class="kt">SyncDirective</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pull</span><span class="o">()</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note that PushPullStage access is guaranteed to be thread-safe, similar to how you would encapsulate state within an Akka Actor.
+Thus you can safely use mutable state within your implementation. Inside our implementation there is no magic.
+We expect the first line to be the header line, store this and do not push it further down the stream. Beginning with the second
+line we zip the headers together with the parsed fields from the CSV parser and emit it with the current line number.</p>
+
+<p>Finally an example how to kickoff the processing:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='Scala'><span class='line'><span class="nc">SynchronousFileSource</span><span class="o">(</span><span class="n">csvFile</span><span class="o">).</span><span class="n">via</span><span class="o">(</span><span class="nc">FlowBuilder</span><span class="o">.</span><span class="n">csvFlow</span><span class="o">).</span>
+</span><span class='line'>    <span class="n">runWith</span><span class="o">(</span><span class="nc">Sink</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)).</span><span class="n">onComplete</span><span class="o">(</span> <span class="k">_</span> <span class="k">=&gt;</span> <span class="n">system</span><span class="o">.</span><span class="n">shutdown</span><span class="o">())</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can find all the code <a href="https://github.com/janlisse/csv-flow">here</a> on github.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Limitations in JSSE TLS Implementation]]></title>

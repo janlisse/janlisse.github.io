@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Akka Streams | 12{programmers}]]></title>
+  <link href="http://janlisse.github.io/blog/categories/akka-streams/atom.xml" rel="self"/>
+  <link href="http://janlisse.github.io/"/>
+  <updated>2015-12-21T16:55:52+01:00</updated>
+  <id>http://janlisse.github.io/</id>
+  <author>
+    <name><![CDATA[Jan Liße]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Stream Processing of Large CSV Files]]></title>
+    <link href="http://janlisse.github.io/blog/2015/12/21/stream-processing-of-large-csv-files/"/>
+    <updated>2015-12-21T15:42:08+01:00</updated>
+    <id>http://janlisse.github.io/blog/2015/12/21/stream-processing-of-large-csv-files</id>
+    <content type="html"><![CDATA[<p>Every now and then every backend developer faces the situation to integrate/process third party data
+into the companies system, provided in the form of plain old CSV files.
+But what if the CSV file is to huge to fit into memory entirely, but you still want to leverage
+parallel computing to get things done in finite time?
+Once again the excellent <a href="http://doc.akka.io/docs/akka-stream-and-http-experimental/1.0/">Akka Streams</a> framework comes to the rescue.</p>
+
+<p>Processing big csv files with Akk Streams is quite straightforward. First you need a Akka Streams <a href="http://doc.akka.io/api/akka-stream-and-http-experimental/current/#akka.stream.scaladsl.Source">Source</a>
+that emits <a href="http://doc.akka.io/api/akka/current/#akka.util.ByteString">ByteStrings</a> from a local file or another storage location like S3. Then you can leverage Akka Streams classes to group the ByteStrings to lines. Afterwards
+ you can then feed those lines into a CSV Parser and emit the parsed fields. Finally you can add your own processing logic i.e. mapping to a custom
+ model and sending to an API or Backend Service.</p>
+
+<p> With SynchronousFileSource Akka Streams already provides the ability to stream ByteStrings from a local file.
+ Grouping them to lines is as simple as:</p>
+
+<pre><code class="` Scala">
+ private def toLine(implicit format: CSVFormat) = Framing.delimiter(
+     ByteString(format.lineTerminator),
+     maximumFrameLength = 4096,
+     allowTruncation = true
+   )
+</code></pre>
+
+<p> The CSVFormat that is passed implicitly determines delimiters, line separators etc. It must match the one that is used in the CSV data to be parsed.
+ The default format uses &ldquo;,&rdquo; as delimiter and &ldquo;\r\n&rdquo; as line separator.</p>
+
+<p> For the CSV parsing part we have written a custom Akka Streams <a href="http://doc.akka.io/docs/akka-stream-and-http-experimental/current/scala/stream-customize.html">PullPushStage</a> that transforms a raw line into a Map[String, String] with the keys being
+ field names from the CSV header line. Thus this stage requires a header line to exist in the CSV. The resulting Map is emitted together
+ with the current line number in the file.</p>
+
+<p> Our implementation utilizes an existing <a href="https://github.com/tototoshi/scala-csv">Scala CSV parsing</a> lib.</p>
+
+<pre><code class="Scala">
+class CsvStage()(implicit format: CSVFormat) extends PushPullStage[String, (Int, Map[String, String])] {
+
+  private val parser = new CSVParser(format)
+  private var headers: Option[List[String]] = None
+  private var line = 0
+
+  override def onPush(elem: String, ctx: Context[(Int, Map[String, String])]): SyncDirective = {
+    val parsed = parser.parseLine(elem)
+    line = line + 1
+    if (headers.isEmpty) {
+      headers = parsed
+      ctx.pull()
+    } else if (parsed.isEmpty) {
+      ctx.pull()
+    } else {
+      val l = line -&gt; headers.get.zip(parsed.get).toMap
+      ctx.push(l)
+    }
+  }
+
+  override def onPull(ctx: Context[(Int, Map[String, String])]): SyncDirective = ctx.pull()
+}
+</code></pre>
+
+<p>Note that PushPullStage access is guaranteed to be thread-safe, similar to how you would encapsulate state within an Akka Actor.
+Thus you can safely use mutable state within your implementation. Inside our implementation there is no magic.
+We expect the first line to be the header line, store this and do not push it further down the stream. Beginning with the second
+line we zip the headers together with the parsed fields from the CSV parser and emit it with the current line number.</p>
+
+<p>Finally an example how to kickoff the processing:</p>
+
+<pre><code class="Scala">
+SynchronousFileSource(csvFile).via(FlowBuilder.csvFlow).
+    runWith(Sink.foreach(println)).onComplete( _ =&gt; system.shutdown())
+</code></pre>
+
+<p>You can find all the code <a href="https://github.com/janlisse/csv-flow">here</a> on github.</p>
+]]></content>
+  </entry>
+  
+</feed>
